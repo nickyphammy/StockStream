@@ -4,3 +4,4 @@ python-dotenv==1.0.0
 httpx==0.25.2
 pydantic==2.5.0
 python-multipart==0.0.6
+finnhub-python==2.4.20
