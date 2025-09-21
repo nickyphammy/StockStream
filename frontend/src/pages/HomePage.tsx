@@ -71,36 +71,90 @@ function HomePage() {
           onSubmit={handleSearch}
         />
 
-        {/* Stock Data Display - Simple Text Box */}
+        {/* Stock Data Display - Formatted */}
         {stockData && (
           <div className="max-w-4xl mx-auto">
             <div className="bg-dark-card border border-dark-border rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-dark-text mb-4">
-                Stock Data Received from Backend:
-              </h3>
-              <pre className="bg-black/50 border border-dark-border rounded p-4 overflow-x-auto">
-                <code className="text-green-400 text-sm">
-                  {JSON.stringify(stockData, null, 2)}
-                </code>
-              </pre>
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-dark-text">
+              {/* Stock Header */}
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <span className="text-dark-text-muted">Symbol:</span> {stockData.symbol}
+                  <h2 className="text-3xl font-bold text-dark-text">{stockData.symbol}</h2>
+                  <p className="text-sm text-dark-text-muted mt-1">
+                    Last updated: {stockData.timestamp ? new Date(stockData.timestamp).toLocaleString() : 'Just now'}
+                  </p>
                 </div>
-                <div>
-                  <span className="text-dark-text-muted">Price:</span> ${stockData.price.toFixed(2)}
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  stockData.change >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {stockData.change >= 0 ? '↑ Up' : '↓ Down'}
                 </div>
-                <div>
-                  <span className="text-dark-text-muted">Change:</span>
-                  <span className={stockData.change >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {' '}{stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)}
+              </div>
+
+              {/* Main Price Display */}
+              <div className="mb-6">
+                <div className="flex items-baseline gap-4">
+                  <span className="text-5xl font-bold text-dark-text">
+                    ${stockData.price.toFixed(2)}
                   </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-2xl font-semibold ${
+                      stockData.change >= 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)}
+                    </span>
+                    <span className={`text-lg px-2 py-1 rounded ${
+                      stockData.changePercent >= 0
+                        ? 'bg-green-500/10 text-green-400'
+                        : 'bg-red-500/10 text-red-400'
+                    }`}>
+                      {stockData.changePercent >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-dark-text-muted">Change %:</span>
-                  <span className={stockData.changePercent >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {' '}{stockData.changePercent >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%
-                  </span>
+              </div>
+
+              {/* Detailed Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-black/30 rounded-lg p-3">
+                  <p className="text-xs text-dark-text-muted mb-1">Open</p>
+                  <p className="text-lg font-semibold text-dark-text">${stockData.open.toFixed(2)}</p>
+                </div>
+                <div className="bg-black/30 rounded-lg p-3">
+                  <p className="text-xs text-dark-text-muted mb-1">Previous Close</p>
+                  <p className="text-lg font-semibold text-dark-text">${stockData.previousClose.toFixed(2)}</p>
+                </div>
+                <div className="bg-black/30 rounded-lg p-3">
+                  <p className="text-xs text-dark-text-muted mb-1">Day High</p>
+                  <p className="text-lg font-semibold text-green-400">${stockData.high.toFixed(2)}</p>
+                </div>
+                <div className="bg-black/30 rounded-lg p-3">
+                  <p className="text-xs text-dark-text-muted mb-1">Day Low</p>
+                  <p className="text-lg font-semibold text-red-400">${stockData.low.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {/* Day Range Bar */}
+              <div className="mt-6">
+                <p className="text-sm text-dark-text-muted mb-2">Day Range</p>
+                <div className="relative bg-black/30 rounded-full h-2">
+                  <div
+                    className="absolute top-0 h-2 bg-gradient-to-r from-red-500 to-green-500 rounded-full"
+                    style={{
+                      left: '0%',
+                      width: `${((stockData.price - stockData.low) / (stockData.high - stockData.low)) * 100}%`
+                    }}
+                  />
+                  <div
+                    className="absolute -top-1 w-4 h-4 bg-white rounded-full shadow-lg"
+                    style={{
+                      left: `calc(${((stockData.price - stockData.low) / (stockData.high - stockData.low)) * 100}% - 8px)`
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-xs text-dark-text-muted">${stockData.low.toFixed(2)}</span>
+                  <span className="text-xs text-dark-text font-semibold">${stockData.price.toFixed(2)}</span>
+                  <span className="text-xs text-dark-text-muted">${stockData.high.toFixed(2)}</span>
                 </div>
               </div>
             </div>
