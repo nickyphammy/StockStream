@@ -1,24 +1,53 @@
-// Types for stock data
+import axios from 'axios'
+
+// Backend API URL
+const API_BASE_URL = 'http://localhost:8000'
+
+// Types matching your backend API
 export interface StockData {
   symbol: string
-  name: string
   price: number
   change: number
   changePercent: number
   high: number
   low: number
-  volume: number
+  open: number
+  previousClose: number
+  timestamp?: string
 }
 
-// Placeholder service for stock API calls
+export interface StockResponse {
+  success: boolean
+  data?: StockData
+  error?: string
+}
+
+// Service for stock API calls
 export class StockService {
-  static async getStockData(_symbol: string): Promise<StockData> {
-    // TODO: Implement real API call
-    throw new Error('Stock API not implemented yet')
+  static async getStockData(symbol: string): Promise<StockData> {
+    try {
+      const response = await axios.get<StockResponse>(`${API_BASE_URL}/api/stocks/quote/${symbol.toUpperCase()}`)
+
+      if (response.data.success && response.data.data) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.error || 'Failed to fetch stock data')
+      }
+    } catch (error) {
+      console.error('Stock data fetch failed:', error)
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          throw new Error(`Stock symbol "${symbol}" not found`)
+        } else if (error.code === 'ECONNREFUSED') {
+          throw new Error('Backend server is not running')
+        }
+      }
+      throw new Error(`Failed to fetch data for ${symbol}`)
+    }
   }
 
   static async searchStocks(_query: string): Promise<StockData[]> {
-    // TODO: Implement stock search
+    // TODO: Implement stock search if needed
     throw new Error('Stock search not implemented yet')
   }
 }
