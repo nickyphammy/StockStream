@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { StockService, type StockData } from '../services'
+import { StockService, type StockData, type NewsArticle } from '../services'
 import { SearchBar } from '../components'
 
 function HomePage() {
   const [searchSymbol, setSearchSymbol] = useState<string>('')
   const [stockData, setStockData] = useState<StockData | null>(null)
+  const [newsData, setNewsData] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState<boolean>(false)
+  const [loadingNews, setLoadingNews] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -13,15 +15,36 @@ function HomePage() {
     if (!searchSymbol.trim()) return
 
     setLoading(true)
+    setLoadingNews(true)
     setError('')
-    
+
     try {
-      const data = await StockService.getStockData(searchSymbol)
-      setStockData(data)
+      // Fetch stock data and news in parallel
+      const [stockResult, newsResult] = await Promise.allSettled([
+        StockService.getStockData(searchSymbol),
+        StockService.getStockNews(searchSymbol, 7)
+      ])
+
+      // Handle stock data
+      if (stockResult.status === 'fulfilled') {
+        setStockData(stockResult.value)
+      } else {
+        setError(stockResult.reason?.message || 'Failed to fetch stock data')
+      }
+
+      // Handle news data
+      if (newsResult.status === 'fulfilled') {
+        setNewsData(newsResult.value)
+      } else {
+        console.warn('Failed to fetch news:', newsResult.reason?.message)
+        setNewsData([]) // Clear news on error but don't show error to user
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch stock data')
+      setError(err instanceof Error ? err.message : 'Failed to fetch data')
     } finally {
       setLoading(false)
+      setLoadingNews(false)
     }
   }
 
@@ -80,6 +103,64 @@ function HomePage() {
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* News Display */}
+        {(newsData.length > 0 || loadingNews) && (
+          <div className="max-w-4xl mx-auto mt-8">
+            <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+              <h3 className="text-xl font-semibold text-dark-text mb-4">
+                Recent News {stockData && `for ${stockData.symbol}`}
+              </h3>
+
+              {loadingNews ? (
+                <div className="text-center py-8">
+                  <div className="text-dark-text-muted">Loading news...</div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {newsData.map((article) => (
+                    <div key={article.id} className="border-b border-dark-border pb-4 last:border-b-0">
+                      <div className="flex gap-4">
+                        {article.image && (
+                          <img
+                            src={article.image}
+                            alt=""
+                            className="w-20 h-20 object-cover rounded flex-shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 font-medium"
+                          >
+                            {article.headline}
+                          </a>
+                          <p className="text-dark-text-muted text-sm mt-1 line-clamp-2">
+                            {article.summary}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-dark-text-muted">
+                            <span>{article.source}</span>
+                            <span>{new Date(article.datetime * 1000).toLocaleDateString()}</span>
+                            <span className="bg-dark-border px-2 py-1 rounded">{article.category}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {newsData.length === 0 && !loadingNews && (
+                <div className="text-center py-8 text-dark-text-muted">
+                  No recent news found for this symbol.
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1,9 +1,9 @@
 import os
 import finnhub
-from typing import Optional
-from datetime import datetime
+from typing import Optional, List
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from ..models.stock import StockData
+from ..models.stock import StockData, NewsArticle
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +51,57 @@ class StockService:
             
         except Exception as e:
             print(f"Error fetching stock data for {symbol}: {e}")
+            return None
+
+    async def get_company_news(self, symbol: str, days: int = 7) -> Optional[List[NewsArticle]]:
+        """
+        Fetch company news from Finnhub API
+        Args:
+            symbol: Stock symbol (e.g., AAPL)
+            days: Number of days back to fetch news (default: 7)
+        """
+        try:
+            symbol = symbol.upper().strip()
+
+            # Calculate date range (Finnhub uses YYYY-MM-DD format)
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days)
+
+            # Format dates for Finnhub API
+            from_date = start_date.strftime('%Y-%m-%d')
+            to_date = end_date.strftime('%Y-%m-%d')
+
+            # Get company news from Finnhub
+            news_data = self.client.company_news(symbol, _from=from_date, to=to_date)
+
+            if not news_data:
+                print(f"No news found for symbol: {symbol}")
+                return []
+
+            # Convert to our NewsArticle model
+            articles = []
+            for article in news_data[:10]:  # Limit to 10 most recent articles
+                try:
+                    news_article = NewsArticle(
+                        id=article.get('id', 0),
+                        headline=article.get('headline', 'No headline'),
+                        summary=article.get('summary', 'No summary available'),
+                        url=article.get('url', ''),
+                        image=article.get('image', None),
+                        source=article.get('source', 'Unknown'),
+                        category=article.get('category', 'General'),
+                        datetime=article.get('datetime', int(datetime.now().timestamp())),
+                        related=symbol
+                    )
+                    articles.append(news_article)
+                except Exception as e:
+                    print(f"Error processing news article: {e}")
+                    continue
+
+            return articles
+
+        except Exception as e:
+            print(f"Error fetching news for {symbol}: {e}")
             return None
 
 # Create a singleton instance
