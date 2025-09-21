@@ -37,3 +37,17 @@ class NewsResponse(BaseModel):
     success: bool
     data: Optional[List[NewsArticle]] = None
     error: Optional[str] = None
+
+class SearchResult(BaseModel):
+    """Search result for company/symbol search"""
+    symbol: str  # Stock symbol (e.g., AAPL)
+    description: str  # Company name (e.g., Apple Inc)
+    type: str  # Security type (e.g., Common Stock)
+    displaySymbol: Optional[str] = None  # Display symbol
+    currency: Optional[str] = None  # Currency
+
+class SearchResponse(BaseModel):
+    """API response wrapper for search results"""
+    success: bool
+    data: Optional[List[SearchResult]] = None
+    error: Optional[str] = None

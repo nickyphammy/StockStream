@@ -40,6 +40,20 @@ export interface NewsResponse {
   error?: string
 }
 
+export interface SearchResult {
+  symbol: string
+  description: string
+  type: string
+  displaySymbol?: string
+  currency?: string
+}
+
+export interface SearchResponse {
+  success: boolean
+  data?: SearchResult[]
+  error?: string
+}
+
 // Service for stock API calls
 export class StockService {
   static async getStockData(symbol: string): Promise<StockData> {
@@ -86,8 +100,23 @@ export class StockService {
     }
   }
 
-  static async searchStocks(_query: string): Promise<StockData[]> {
-    // TODO: Implement stock search if needed
-    throw new Error('Stock search not implemented yet')
+  static async searchStocks(query: string): Promise<SearchResult[]> {
+    try {
+      const response = await axios.get<SearchResponse>(`${API_BASE_URL}/api/stocks/search?q=${encodeURIComponent(query)}`)
+
+      if (response.data.success && response.data.data) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.error || 'Failed to search stocks')
+      }
+    } catch (error) {
+      console.error('Stock search failed:', error)
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNREFUSED') {
+          throw new Error('Backend server is not running')
+        }
+      }
+      throw new Error(`Failed to search for "${query}"`)
+    }
   }
 }

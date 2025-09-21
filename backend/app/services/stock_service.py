@@ -3,7 +3,7 @@ import finnhub
 from typing import Optional, List
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from ..models.stock import StockData, NewsArticle
+from ..models.stock import StockData, NewsArticle, SearchResult
 
 # Load environment variables
 load_dotenv()
@@ -102,6 +102,48 @@ class StockService:
 
         except Exception as e:
             print(f"Error fetching news for {symbol}: {e}")
+            return None
+
+    async def search_symbols(self, query: str) -> Optional[List[SearchResult]]:
+        """
+        Search for stocks by company name or symbol
+        Args:
+            query: Search query (company name or partial symbol)
+        """
+        try:
+            query = query.strip()
+
+            if not query:
+                return []
+
+            # Use Finnhub's symbol search endpoint
+            search_results = self.client.symbol_lookup(query)
+
+            if not search_results or 'result' not in search_results:
+                return []
+
+            # Convert to our SearchResult model
+            results = []
+            for item in search_results['result'][:10]:  # Limit to 10 results
+                try:
+                    # Filter to only include stocks (not forex, crypto, etc)
+                    if item.get('type', '').lower() in ['common stock', 'stock', 'equity', 'adr']:
+                        search_result = SearchResult(
+                            symbol=item.get('symbol', ''),
+                            description=item.get('description', ''),
+                            type=item.get('type', 'Stock'),
+                            displaySymbol=item.get('displaySymbol', item.get('symbol', '')),
+                            currency=item.get('currency', 'USD')
+                        )
+                        results.append(search_result)
+                except Exception as e:
+                    print(f"Error processing search result: {e}")
+                    continue
+
+            return results
+
+        except Exception as e:
+            print(f"Error searching for '{query}': {e}")
             return None
 
 # Create a singleton instance

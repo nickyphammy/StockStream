@@ -69,6 +69,12 @@ function HomePage() {
           error={error}
           onSearchChange={setSearchSymbol}
           onSubmit={handleSearch}
+          onSelectStock={async (symbol) => {
+            setSearchSymbol(symbol)
+            // Automatically search when a stock is selected
+            const e = { preventDefault: () => {} } as React.FormEvent
+            await handleSearch(e)
+          }}
         />
 
         {/* Stock Data Display - Formatted */}

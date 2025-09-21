@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from ..models.stock import StockResponse, NewsResponse
+from ..models.stock import StockResponse, NewsResponse, SearchResponse
 from ..services.stock_service import get_stock_service
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
@@ -35,6 +35,36 @@ async def get_stock_quote(symbol: str):
         print(f"Unexpected error in get_stock_quote: {e}")
         raise HTTPException(
             status_code=500, 
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@router.get("/search", response_model=SearchResponse)
+async def search_stocks(q: str = Query(..., min_length=1, description="Search query")):
+    """Search for stocks by company name or symbol"""
+    try:
+        service = get_stock_service()
+        search_results = await service.search_symbols(q)
+
+        if search_results is None:
+            return SearchResponse(
+                success=False,
+                error="Search service temporarily unavailable"
+            )
+
+        return SearchResponse(
+            success=True,
+            data=search_results
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="API configuration error. Please check server configuration."
+        )
+    except Exception as e:
+        print(f"Unexpected error in search_stocks: {e}")
+        raise HTTPException(
+            status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
 
