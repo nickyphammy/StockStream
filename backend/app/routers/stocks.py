@@ -110,7 +110,8 @@ async def health_check():
         return {
             "status": "healthy",
             "service": "stock_prices",
-            "api_configured": bool(service.api_key)
+            "api_configured": bool(service.api_key),
+            "cache_entries": len(service._cache)
         }
     except Exception as e:
         return {
@@ -118,3 +119,19 @@ async def health_check():
             "service": "stock_prices",
             "error": str(e)
         }
+
+@router.post("/cache/clear")
+async def clear_cache():
+    """Clear all cached data"""
+    try:
+        service = get_stock_service()
+        service.clear_cache()
+        return {
+            "success": True,
+            "message": "Cache cleared successfully"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear cache: {str(e)}"
+        )
