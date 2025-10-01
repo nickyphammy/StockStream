@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// Backend API URL
-const API_BASE_URL = 'http://localhost:8000'
+// Backend API URL - use environment variable or default to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Types matching your backend API
 export interface StockData {

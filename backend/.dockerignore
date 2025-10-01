@@ -1,0 +1,39 @@
+# Virtual environment
+venv/
+env/
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Test files
+tests/
+test_*
+*_test.py
+
+# Development files
+.pytest_cache/
+.coverage
+htmlcov/
